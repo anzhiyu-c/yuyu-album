@@ -1,0 +1,89 @@
+name: Build and Deploy
+
+on:
+  push:
+    branches: [main]
+  # pull_request:
+  #   branches: [main]
+  # release:
+  #   types: [created]
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v2
+        with:
+          submodules: "recursive"
+          token: ${{ secrets.GH_PAT }}
+
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: "1.22" # 您的 Go 版本
+
+      - name: Cache Go modules
+        uses: actions/cache@v3
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Download Go modules
+        run: go mod download
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "20" # 您的 Node.js 版本
+
+      - name: Cache Node modules
+        uses: actions/cache@v3
+        with:
+          path: assets/node_modules
+          key: ${{ runner.os }}-node-${{ hashFiles('assets/pnpm-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      - name: Install pnpm
+        run: npm install -g pnpm@10
+
+      - name: Install Frontend
+        run: |
+          cd assets  # 前端代码目录
+          pnpm install
+
+      - name: Build Frontend
+        run: |
+          cd assets  # 前端代码目录
+          pnpm run build
+
+      - name: Cross-compile for Linux amd64
+        run: GOOS=linux GOARCH=amd64 go build -o wallpaper-linux-amd64
+
+      # - name: Cross-compile for Windows amd64
+      #   run: GOOS=windows GOARCH=amd64 go build -o share-windows-amd64.exe
+
+      # - name: Cross-compile for macOS amd64
+      #   run: GOOS=darwin GOARCH=amd64 go build -o share-macos-amd64
+
+      - name: Upload Linux Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: wallpaper-linux-amd64
+          path: wallpaper-linux-amd64
+
+      # - name: Upload Windows Artifact
+      #   uses: actions/upload-artifact@v2
+      #   with:
+      #     name: share-windows-amd64.exe
+      #     path: share-windows-amd64.exe
+
+      # - name: Upload macOS Artifact
+      #   uses: actions/upload-artifact@v2
+      #   with:
+      #     name: share-macos-amd64
+      #     path: share-macos-amd64
