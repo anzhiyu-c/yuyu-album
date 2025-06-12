@@ -22,7 +22,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v2
         with:
-          go-version: "1.22" # 您的 Go 版本
+          go-version: "1.24" # 您的 Go 版本
 
       - name: Cache Go modules
         uses: actions/cache@v3
@@ -62,28 +62,25 @@ jobs:
           pnpm run build
 
       - name: Cross-compile for Linux amd64
-        run: GOOS=linux GOARCH=amd64 go build -o wallpaper-linux-amd64
+        run: GOOS=linux GOARCH=amd64 go build -o yuyu-album-linux-amd64
 
-      # - name: Cross-compile for Windows amd64
-      #   run: GOOS=windows GOARCH=amd64 go build -o share-windows-amd64.exe
+        # - name: Cross-compile for Windows amd64
+        #   run: GOOS=windows GOARCH=amd64 go build -o yuyu-album-windows-amd64.exe
 
-      # - name: Cross-compile for macOS amd64
-      #   run: GOOS=darwin GOARCH=amd64 go build -o share-macos-amd64
-
-      - name: Upload Linux Artifact
-        uses: actions/upload-artifact@v4
+        # - name: Cross-compile for macOS amd64
+        #   run: GOOS=darwin GOARCH=amd64 go build -o yuyu-album-macos-amd64
         with:
-          name: wallpaper-linux-amd64
-          path: wallpaper-linux-amd64
+          name: yuyu-album-linux-amd64
+          path: yuyu-album-linux-amd64
 
       # - name: Upload Windows Artifact
       #   uses: actions/upload-artifact@v2
       #   with:
-      #     name: share-windows-amd64.exe
-      #     path: share-windows-amd64.exe
+      #     name: yuyu-album-windows-amd64.exe
+      #     path: yuyu-album-windows-amd64.exe
 
       # - name: Upload macOS Artifact
       #   uses: actions/upload-artifact@v2
       #   with:
-      #     name: share-macos-amd64
-      #     path: share-macos-amd64
+      #     name: yuyu-album-macos-amd64
+      #     path: yuyu-album-macos-amd64

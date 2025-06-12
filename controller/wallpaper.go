@@ -1,11 +1,3 @@
-/*
- * @Description: 壁纸控制器
- * @Author: 安知鱼
- * @Date: 2025-04-11 15:17:13
- * @LastEditTime: 2025-04-13 01:16:09
- * @LastEditors: 安知鱼
- */
-
 package controller
 
 import (
@@ -14,6 +6,7 @@ import (
 	"strconv"
 	"time"
 
+	"wallpaper-admin/config"
 	"wallpaper-admin/database"
 	"wallpaper-admin/model"
 
@@ -179,10 +172,10 @@ func AddWallpaper(c *gin.Context) {
 		req.DownloadUrl = req.ImageUrl
 	}
 	if req.ThumbParam == "" {
-		req.ThumbParam = "x-oss-process=image//resize,h_600/quality,q_100/auto-orient,0/interlace,1/format,avif"
+		req.ThumbParam = config.Conf.GetString("DEFAULT_THUMB_PARAM")
 	}
 	if req.BigParam == "" {
-		req.BigParam = "x-oss-process=image//resize,s_2000/quality,q_100/auto-orient,0/interlace,1/format,avif"
+		req.BigParam = config.Conf.GetString("DEFAULT_BIG_PARAM")
 	}
 
 	// 将标签数组转为英文逗号分隔的字符串
@@ -243,6 +236,7 @@ func DeleteWallpaper(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"success": true, "message": "删除成功", "code": 200})
 }
 
+// 更新壁纸
 func UpdateWallpaper(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := strconv.Atoi(idStr)
@@ -273,6 +267,12 @@ func UpdateWallpaper(c *gin.Context) {
 	}
 	if req.DownloadUrl == "" {
 		req.DownloadUrl = req.ImageUrl
+	}
+	if req.ThumbParam == "" {
+		req.ThumbParam = config.Conf.GetString("DEFAULT_THUMB_PARAM")
+	}
+	if req.BigParam == "" {
+		req.BigParam = config.Conf.GetString("DEFAULT_BIG_PARAM")
 	}
 
 	tagsStr := joinTags(req.Tags)
