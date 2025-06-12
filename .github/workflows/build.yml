@@ -3,10 +3,8 @@ name: Build and Deploy
 on:
   push:
     branches: [main]
-  # pull_request:
-  #   branches: [main]
-  # release:
-  #   types: [created]
+    tags:
+      - "v*" # 添加这一行，以便在推送标签时触发 Release 作业
 
 jobs:
   build:
@@ -53,12 +51,12 @@ jobs:
 
       - name: Install Frontend
         run: |
-          cd assets  # 前端代码目录
+          cd assets # 前端代码目录
           pnpm install
 
       - name: Build Frontend
         run: |
-          cd assets  # 前端代码目录
+          cd assets # 前端代码目录
           pnpm run build
 
       - name: Cross-compile for Linux amd64
@@ -87,3 +85,44 @@ jobs:
         with:
           name: yuyu-album-macos-amd64
           path: yuyu-album-macos-amd64
+
+  release:
+    runs-on: ubuntu-22.04
+    needs: build # 确保在 build 作业完成后再运行
+    if: startsWith(github.ref, 'refs/tags/v') # 仅当是标签推送时才运行此作业
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2 # 需要再次检出代码，以便访问工作目录
+
+      - name: Download Linux Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: yuyu-album-linux-amd64
+          path: . # 下载到当前目录
+
+      - name: Download Windows Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: yuyu-album-windows-amd64.exe
+          path: . # 下载到当前目录
+
+      - name: Download macOS Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: yuyu-album-macos-amd64
+          path: . # 下载到当前目录
+
+      - name: Create Release and Upload Assets
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            yuyu-album-linux-amd64
+            yuyu-album-windows-amd64.exe
+            yuyu-album-macos-amd64
+          body: |
+            ✨ 新版本发布！
+            🎉 这个版本包含了针对 Linux, Windows 和 macOS 的可执行文件。
+            # 您可以在这里添加更多关于 Release 的描述。
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # GitHub 提供的默认 token
