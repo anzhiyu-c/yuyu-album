@@ -98,3 +98,5 @@ directory=/www/wwwroot/album.anheyu.com/
 ```
 
 `你可以进入到 网站的 /login 路径登录上传你的相册图片`
+
+另外你需要注意，现在没有修改密码的功能，所以请务必在环境变量中设置好 `ADMIN_USERNAME` 和 `ADMIN_PASSWORD`，并且不要泄露给他人。
