@@ -65,25 +65,25 @@ jobs:
         run: GOOS=linux GOARCH=amd64 go build -o yuyu-album-linux-amd64
 
       - name: Upload Linux Artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: yuyu-album-linux-amd64
           path: yuyu-album-linux-amd64
 
-      # - name: Cross-compile for Windows amd64
-      #   run: GOOS=windows GOARCH=amd64 go build -o yuyu-album-windows-amd64.exe
+      - name: Cross-compile for Windows amd64
+        run: GOOS=windows GOARCH=amd64 go build -o yuyu-album-windows-amd64.exe
 
-      # - name: Upload Windows Artifact
-      #   uses: actions/upload-artifact@v2
-      #   with:
-      #     name: yuyu-album-windows-amd64.exe
-      #     path: yuyu-album-windows-amd64.exe
+      - name: Upload Windows Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: yuyu-album-windows-amd64.exe
+          path: yuyu-album-windows-amd64.exe
 
-      # - name: Cross-compile for macOS amd64
-      #   run: GOOS=darwin GOARCH=amd64 go build -o yuyu-album-macos-amd64
+      - name: Cross-compile for macOS amd64
+        run: GOOS=darwin GOARCH=amd64 go build -o yuyu-album-macos-amd64
 
-      # - name: Upload macOS Artifact
-      #   uses: actions/upload-artifact@v2
-      #   with:
-      #     name: yuyu-album-macos-amd64
-      #     path: yuyu-album-macos-amd64
+      - name: Upload macOS Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: yuyu-album-macos-amd64
+          path: yuyu-album-macos-amd64
