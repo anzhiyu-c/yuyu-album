@@ -45,4 +45,3 @@ UI设计：[张洪](https://plog.zhheo.com/)
 1. 从[https://github.com/anzhiyu-c/yuyu-album/releases](https://github.com/anzhiyu-c/yuyu-album/releases)下载对应服务器最新的发布版本
 
 2. 目前只支持服务器部署
-
