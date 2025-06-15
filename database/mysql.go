@@ -77,6 +77,8 @@ func InitSettings(db *gorm.DB) {
 		"API_URL":             {Value: "https://album.anheyu.com/", Comment: "API地址"},
 		"LOGO_URL":            {Value: "https://album.anheyu.com/logo.svg", Comment: "Logo图片URL"},
 		"ICON_URL":            {Value: "https://album.anheyu.com/logo.svg", Comment: "Icon图标URL"},
+		"SITE_KEYWORDS":       {Value: "鱼鱼相册,相册,图片管理", Comment: "站点关键词"},
+		"SITE_DESCRIPTION":    {Value: "鱼鱼相册是一个简单易用的图片管理系统，支持多种图片格式和处理方式。", Comment: "站点描述"},
 		"DEFAULT_THUMB_PARAM": {Value: "x-oss-process=image//resize,h_600/quality,q_100/auto-orient,0/interlace,1/format,avif", Comment: "默认缩略图处理参数"},
 		"DEFAULT_BIG_PARAM":   {Value: "x-oss-process=image//resize,s_2000/quality,q_100/auto-orient,0/interlace,1/format,avif", Comment: "默认大图处理参数"},
 	}
