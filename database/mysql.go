@@ -2,7 +2,7 @@ package database
 
 import (
 	"album-admin/config"
-	"album-admin/model"
+	"album-admin/model" // 确保导入 model 包
 	"album-admin/utils"
 	"fmt"
 	"log"
@@ -22,7 +22,7 @@ func InitMySQL() {
 		log.New(os.Stdout, "\r\n", log.LstdFlags),
 		logger.Config{
 			SlowThreshold:             time.Second,
-			LogLevel:                  logger.Warn,
+			LogLevel:                  logger.Warn, // 设置日志级别为 Warn 或 Info，以便看到更多信息
 			IgnoreRecordNotFoundError: true,
 			Colorful:                  true,
 		},
@@ -61,9 +61,9 @@ func InitMySQL() {
 	fmt.Println("MySQL 数据库连接成功！")
 }
 
-// InitSettings 检查并初始化默认配置项
+// InitSettings 检查并初始化默认配置项和第一个管理员用户
 func InitSettings(db *gorm.DB) {
-	// 定义所有默认配置，这里使用 Map 更方便管理
+	log.Println("--- 开始初始化站点配置 (Setting 表) ---")
 	defaultSettings := map[string]struct {
 		Value   string
 		Comment string
@@ -93,27 +93,46 @@ func InitSettings(db *gorm.DB) {
 
 	for key, data := range defaultSettings {
 		var setting model.Setting
+		log.Printf("检查配置项: %s", key)
 		// 检查配置是否存在
-		result := db.Where("key = ?", key).First(&setting)
+		// 注意：这里的 db.Where("ConfigKey = ?", key) 是假设 model.Setting 中已经改为 ConfigKey
+		result := db.Where("config_key = ?", key).First(&setting) // 使用正确的列名
 		if result.Error == gorm.ErrRecordNotFound {
 			// 如果不存在，则创建
 			newSetting := model.Setting{
-				Key:     key,
-				Value:   data.Value,
-				Comment: data.Comment,
+				ConfigKey: key, // **关键修改：从 Key 改为 ConfigKey**
+				Value:     data.Value,
+				Comment:   data.Comment,
 			}
 			if createErr := db.Create(&newSetting).Error; createErr != nil {
-				log.Printf("Failed to create default setting '%s': %v", key, createErr)
+				log.Printf("⚠️ 失败: 创建默认配置项 '%s' 失败: %v", key, createErr)
 			} else {
-				log.Printf("Default setting '%s' created.", key)
+				log.Printf("✅ 成功: 默认配置项 '%s' 已创建。", key)
 			}
 		} else if result.Error != nil {
 			// 其他查询错误
-			log.Printf("Error checking setting '%s': %v", key, result.Error)
+			log.Printf("❌ 错误: 查询配置项 '%s' 时发生错误: %v", key, result.Error)
 		} else {
 			// 配置已存在，不做处理
-			// log.Printf("Setting '%s' already exists, skipping.", key)
+			log.Printf("ℹ️ 跳过: 配置项 '%s' 已存在，跳过创建。", key)
 		}
 	}
-	log.Println("站点配置初始化完成。")
+	log.Println("--- 站点配置 (Setting 表) 初始化完成。---")
+
+	// --- 检查 User 表并记录状态 ---
+	log.Println("--- 开始检查 User 表状态 ---")
+	var userCount int64
+	// 尝试获取 User 表中的记录数量
+	if err := db.Model(&model.User{}).Count(&userCount).Error; err != nil {
+		// 如果查询失败，可能是表不存在或其他数据库问题
+		log.Printf("❌ 错误: 查询 User 表记录数量失败: %v。请确认 'users' 表已正确迁移。", err)
+	} else {
+		log.Printf("当前 User 表中用户数量: %d", userCount)
+		if userCount == 0 {
+			log.Println("User 表为空，第一个注册的用户将成为管理员。")
+		} else {
+			log.Println("User 表中已存在用户，注册将创建普通用户。")
+		}
+	}
+	log.Println("--- User 表状态检查完成。---")
 }

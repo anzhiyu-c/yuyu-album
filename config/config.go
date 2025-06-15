@@ -44,7 +44,7 @@ func LoadSettingsFromDB(db *gorm.DB) error {
 
 		SiteSettings = make(map[string]string)
 		for _, s := range settings {
-			SiteSettings[s.Key] = s.Value
+			SiteSettings[s.ConfigKey] = s.Value
 		}
 		log.Println("All site settings loaded from database successfully.")
 	})

@@ -2,7 +2,7 @@
  * @Description:
  * @Author: 安知鱼
  * @Date: 2025-06-15 12:04:20
- * @LastEditTime: 2025-06-15 12:49:42
+ * @LastEditTime: 2025-06-15 13:03:48
  * @LastEditors: 安知鱼
  */
 package migrate
@@ -28,6 +28,7 @@ func AutoMigrateTables(db *gorm.DB) {
 		&model.Album{},
 		&model.Tag{},
 		&model.Setting{},
+		&model.User{},
 	)
 	if err != nil {
 		log.Fatalf("数据库自动迁移失败: %v", err)

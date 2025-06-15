@@ -2,6 +2,8 @@ package controller
 
 import (
 	"album-admin/config"
+	"album-admin/database"
+	"album-admin/model"
 	"album-admin/utils"
 	"album-admin/utils/response"
 	"net/http"
@@ -34,21 +36,32 @@ func Login(c *gin.Context) {
 		return
 	}
 
-	adminUser := config.Conf.GetString("ADMIN_USERNAME")
-	adminPass := config.Conf.GetString("ADMIN_PASSWORD")
-
-	if req.Username != adminUser || req.Password != adminPass {
+	var user model.User
+	// 从数据库查询用户
+	// 同时检查用户状态，只有状态为1（正常）的用户才能登录
+	if err := database.DB.Where("username = ? AND status = ?", req.Username, 1).First(&user).Error; err != nil {
+		// 如果用户不存在、被禁用或查询失败，统一返回“账号或密码错误”以避免信息泄露
 		response.Fail(c, http.StatusUnauthorized, "账号或密码错误")
 		return
 	}
 
-	accessToken, err := utils.GenerateToken(req.Username)
+	// 验证密码
+	if !utils.CheckPasswordHash(req.Password, user.PasswordHash) {
+		response.Fail(c, http.StatusUnauthorized, "账号或密码错误")
+		return
+	}
+
+	// 更新最后登录时间
+	now := time.Now()
+	database.DB.Model(&user).Update("LastLoginAt", &now)
+
+	accessToken, err := utils.GenerateToken(user.Username)
 	if err != nil {
 		response.Fail(c, http.StatusInternalServerError, "生成AccessToken失败")
 		return
 	}
 
-	refreshToken, err := utils.GenerateToken(req.Username)
+	refreshToken, err := utils.GenerateToken(user.Username)
 	if err != nil {
 		response.Fail(c, http.StatusInternalServerError, "生成RefreshToken失败")
 		return
@@ -56,15 +69,22 @@ func Login(c *gin.Context) {
 
 	expires := time.Now().Add(time.Hour * 720).Format("2006/01/02 15:04:05")
 
-	appLoginImage := config.GetSetting("USER_AVATAR")
-	appName := config.GetSetting("APP_NAME")
+	// 从用户模型中获取头像和昵称，如果用户模型中没有，则使用站点配置的默认值
+	userAvatar := user.Avatar
+	if userAvatar == "" {
+		userAvatar = config.GetSetting("USER_AVATAR")
+	}
+	userNickname := user.Nickname
+	if userNickname == "" {
+		userNickname = config.GetSetting("APP_NAME") // 可以用应用名作为默认昵称
+	}
 
 	data := LoginResponseData{
-		Avatar:       appLoginImage,
-		Username:     "admin",
-		Nickname:     appName,
-		Roles:        []string{"admin"},
-		Permissions:  []string{"admin"},
+		Avatar:       userAvatar,
+		Username:     user.Username,
+		Nickname:     userNickname,
+		Roles:        []string{user.Role},
+		Permissions:  []string{user.Role + "_permission"},
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
 		Expires:      expires,
@@ -93,6 +113,13 @@ func RefreshToken(c *gin.Context) {
 	username, ok := claims["username"].(string)
 	if !ok {
 		response.Fail(c, http.StatusUnauthorized, "RefreshToken中缺少用户名信息")
+		return
+	}
+
+	// 校验用户是否存在且状态正常
+	var user model.User
+	if err := database.DB.Where("username = ? AND status = ?", username, 1).First(&user).Error; err != nil {
+		response.Fail(c, http.StatusUnauthorized, "用户不存在或已被禁用")
 		return
 	}
 
