@@ -47,7 +47,7 @@ func main() {
 	database.InitRedis()
 	fmt.Println("正在执行数据库迁移...")
 	migrate.AutoMigrateTables(database.DB)
-	database.InitSettings(database.DB)
+	config.InitSettings(database.DB)
 	if err := config.LoadSettingsFromDB(database.DB); err != nil {
 		log.Fatalf("Failed to load site settings from database: %v", err)
 	}

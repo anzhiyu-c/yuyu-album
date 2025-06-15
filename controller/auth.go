@@ -5,8 +5,10 @@ import (
 	"album-admin/database"
 	"album-admin/model"
 	"album-admin/utils"
+	"album-admin/utils/jwtutil"
 	"album-admin/utils/response"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -37,15 +39,11 @@ func Login(c *gin.Context) {
 	}
 
 	var user model.User
-	// 从数据库查询用户
-	// 同时检查用户状态，只有状态为1（正常）的用户才能登录
 	if err := database.DB.Where("username = ? AND status = ?", req.Username, 1).First(&user).Error; err != nil {
-		// 如果用户不存在、被禁用或查询失败，统一返回“账号或密码错误”以避免信息泄露
 		response.Fail(c, http.StatusUnauthorized, "账号或密码错误")
 		return
 	}
 
-	// 验证密码
 	if !utils.CheckPasswordHash(req.Password, user.PasswordHash) {
 		response.Fail(c, http.StatusUnauthorized, "账号或密码错误")
 		return
@@ -55,13 +53,16 @@ func Login(c *gin.Context) {
 	now := time.Now()
 	database.DB.Model(&user).Update("LastLoginAt", &now)
 
-	accessToken, err := utils.GenerateToken(user.Username)
+	// 支持多个角色用逗号分隔，例如："admin,editor"
+	roles := strings.Split(user.Role, ",")
+
+	accessToken, err := jwtutil.GenerateToken(user.Username, roles)
 	if err != nil {
 		response.Fail(c, http.StatusInternalServerError, "生成AccessToken失败")
 		return
 	}
 
-	refreshToken, err := utils.GenerateToken(user.Username)
+	refreshToken, err := jwtutil.GenerateToken(user.Username, roles)
 	if err != nil {
 		response.Fail(c, http.StatusInternalServerError, "生成RefreshToken失败")
 		return
@@ -69,22 +70,26 @@ func Login(c *gin.Context) {
 
 	expires := time.Now().Add(time.Hour * 720).Format("2006/01/02 15:04:05")
 
-	// 从用户模型中获取头像和昵称，如果用户模型中没有，则使用站点配置的默认值
 	userAvatar := user.Avatar
 	if userAvatar == "" {
 		userAvatar = config.GetSetting("USER_AVATAR")
 	}
 	userNickname := user.Nickname
 	if userNickname == "" {
-		userNickname = config.GetSetting("APP_NAME") // 可以用应用名作为默认昵称
+		userNickname = config.GetSetting("APP_NAME")
+	}
+
+	permissions := []string{}
+	for _, role := range roles {
+		permissions = append(permissions, role+"_permission")
 	}
 
 	data := LoginResponseData{
 		Avatar:       userAvatar,
 		Username:     user.Username,
 		Nickname:     userNickname,
-		Roles:        []string{user.Role},
-		Permissions:  []string{user.Role + "_permission"},
+		Roles:        roles,
+		Permissions:  permissions,
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
 		Expires:      expires,
@@ -100,7 +105,7 @@ func RefreshToken(c *gin.Context) {
 		return
 	}
 
-	token, err := utils.ParseToken(refreshToken)
+	token, err := jwtutil.ParseToken(refreshToken)
 	if err != nil || !token.Valid {
 		response.Fail(c, http.StatusUnauthorized, "无效RefreshToken")
 		return
@@ -123,7 +128,9 @@ func RefreshToken(c *gin.Context) {
 		return
 	}
 
-	accessToken, err := utils.GenerateToken(username)
+	roles := strings.Split(user.Role, ",")
+
+	accessToken, err := jwtutil.GenerateToken(username, roles)
 	if err != nil {
 		response.Fail(c, http.StatusInternalServerError, "生成新Token失败")
 		return

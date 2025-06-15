@@ -1,5 +1,12 @@
-// utils/jwt.go (修改)
-package utils
+/*
+ * @Description:
+ * @Author: 安知鱼
+ * @Date: 2025-06-15 11:30:55
+ * @LastEditTime: 2025-06-15 23:58:42
+ * @LastEditors: 安知鱼
+ */
+// File: utils/jwtutil/jwtutil.go
+package jwtutil
 
 import (
 	"album-admin/config"
@@ -9,7 +16,8 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-func GenerateToken(username string) (string, error) {
+func GenerateToken(username string, roles []string) (string, error) {
+
 	jwtSecret := config.GetSetting("JWT_SECRET")
 	if jwtSecret == "" {
 		return "", fmt.Errorf("JWT Secret is not loaded from site settings")
@@ -17,6 +25,7 @@ func GenerateToken(username string) (string, error) {
 
 	claims := jwt.MapClaims{
 		"username": username,
+		"roles":    roles,
 		"exp":      time.Now().Add(time.Hour * 720).Unix(),
 	}
 

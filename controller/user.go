@@ -142,3 +142,22 @@ func GetUserInfo(c *gin.Context) {
 
 	response.Success(c, user, "获取用户信息成功")
 }
+
+// CheckEmail 检查邮箱是否已被注册
+func CheckEmail(c *gin.Context) {
+	email := c.Query("email")
+	if email == "" {
+		response.Fail(c, http.StatusBadRequest, "参数错误：缺少 email")
+		return
+	}
+
+	var user model.User
+	if err := database.DB.Where("email = ?", email).First(&user).Error; err == nil {
+		// 邮箱已注册
+		response.Success(c, gin.H{"exists": true}, "该邮箱已被注册")
+		return
+	}
+
+	// 邮箱未注册
+	response.Success(c, gin.H{"exists": false}, "该邮箱可以使用")
+}
