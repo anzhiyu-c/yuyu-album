@@ -8,7 +8,7 @@
 package routes
 
 import (
-	"wallpaper-admin/controller"
+	"album-admin/controller"
 
 	"github.com/gin-gonic/gin"
 )
@@ -17,13 +17,13 @@ func SetupRouter(api *gin.RouterGroup) {
 	// 私有接口
 	api.POST("/login", controller.Login)
 	api.POST("/refresh-token", controller.RefreshToken)
-	RegisterWallpaperRoutes(api)
+	RegisterAlbumRoutes(api)
 
 	// 公共接口
 	public := api.Group("/public")
 	{
-		public.GET("/wallpapers", controller.GetPublicWallpapers)
-		public.PUT("/stat/:id", controller.UpdateWallpaperStat)
-		public.GET("/site-config", controller.GetSiteConfig) 
+		public.GET("/albums", controller.GetPublicAlbums)
+		public.PUT("/stat/:id", controller.UpdateAlbumStat)
+		public.GET("/site-config", controller.GetSiteConfig)
 	}
 }

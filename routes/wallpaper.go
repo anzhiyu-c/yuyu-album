@@ -8,14 +8,14 @@
 package routes
 
 import (
-	"wallpaper-admin/controller"
+	"album-admin/controller"
 
 	"github.com/gin-gonic/gin"
 )
 
-func RegisterWallpaperRoutes(r *gin.RouterGroup) {
-	r.GET("/wallpapers", controller.GetWallpapers)
-	r.POST("/wallpapers", controller.AddWallpaper)
-	r.PUT("/wallpapers/:id", controller.UpdateWallpaper)
-	r.DELETE("/wallpapers/:id", controller.DeleteWallpaper)
+func RegisterAlbumRoutes(r *gin.RouterGroup) {
+	r.GET("/albums", controller.GetAlbums)
+	r.POST("/albums", controller.AddAlbum)
+	r.PUT("/albums/:id", controller.UpdateAlbum)
+	r.DELETE("/albums/:id", controller.DeleteAlbum)
 }

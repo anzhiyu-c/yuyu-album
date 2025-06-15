@@ -2,7 +2,7 @@
  * @Description:
  * @Author: 安知鱼
  * @Date: 2025-04-11 06:02:54
- * @LastEditTime: 2025-04-12 20:17:41
+ * @LastEditTime: 2025-06-15 12:30:16
  * @LastEditors: 安知鱼
  */
 package database
@@ -12,7 +12,7 @@ import (
 	"log"     // 用于日志记录
 	"strconv" // 用于将字符串转换为整数
 
-	"wallpaper-admin/config" // 你的配置包，确保路径正确
+	"album-admin/config" // 你的配置包，确保路径正确
 
 	"github.com/redis/go-redis/v9" // Redis 客户端库
 )
@@ -25,11 +25,8 @@ var Ctx = context.Background()
 
 // InitRedis 初始化 Redis 连接
 func InitRedis() {
-	// 确保配置已经加载，通常这应该在 main 函数或初始化阶段调用 config.LoadConfig()
 	if config.Conf == nil {
 		log.Fatal("Configuration not loaded. Call config.LoadConfig() first.")
-		// 或者你可以在这里调用 config.LoadConfig()，但通常建议在程序启动时统一加载
-		// config.LoadConfig()
 	}
 
 	// --- 1. 从配置 (viper) 中获取 Redis 连接信息 ---

@@ -1,4 +1,4 @@
-module wallpaper-admin
+module album-admin
 
 go 1.24.4
 

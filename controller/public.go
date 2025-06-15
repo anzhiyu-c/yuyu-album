@@ -1,24 +1,26 @@
 /*
  * @Description:
  * @Author: 安知鱼
- * @Date: 2025-04-11 18:48:11
- * @LastEditTime: 2025-04-12 11:54:21
+ * @Date: 2025-06-15 11:30:55
+ * @LastEditTime: 2025-06-15 12:18:41
  * @LastEditors: 安知鱼
  */
 package controller
 
 import (
+	"album-admin/database"
+	"album-admin/model"
+	"album-admin/utils/response"
 	"net/http"
 	"strconv"
 	"time"
-	"wallpaper-admin/database"
-	"wallpaper-admin/model"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
 
-func GetPublicWallpapers(c *gin.Context) {
+// GetPublicAlbums 获取公开的相册列表
+func GetPublicAlbums(c *gin.Context) {
 	pageStr := c.DefaultQuery("page", "1")
 	pageSizeStr := c.DefaultQuery("pageSize", "12")
 	tag := c.Query("tag")
@@ -48,53 +50,54 @@ func GetPublicWallpapers(c *gin.Context) {
 		}
 	}
 
-	var list []model.Wallpaper
+	var list []model.Album
 	var total int64
 
-	db.Model(&model.Wallpaper{}).Count(&total)
+	db.Model(&model.Album{}).Count(&total)
 
 	db.Order("created_at DESC").
 		Limit(pageSize).Offset(offset).
 		Find(&list)
 
-	c.JSON(http.StatusOK, gin.H{
-		"success": true,
-		"data": gin.H{
-			"list":     list,
-			"total":    total,
-			"pageNum":  page,
-			"pageSize": pageSize,
-		},
-		"code": 200,
-	})
+	// 使用统一返回体
+	response.Success(c, gin.H{
+		"list":     list,
+		"total":    total,
+		"pageNum":  page,
+		"pageSize": pageSize,
+	}, "获取相册列表成功")
 }
 
-// 更新访问量或下载量
-func UpdateWallpaperStat(c *gin.Context) {
+// UpdateAlbumStat 更新访问量或下载量
+func UpdateAlbumStat(c *gin.Context) {
 	idStr := c.Param("id")
 	statType := c.Query("type") // "view" 或 "download"
 
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "无效的ID"})
+		// 使用统一返回体
+		response.Fail(c, http.StatusBadRequest, "无效的ID")
 		return
 	}
 
-	var wallpaper model.Wallpaper
-	if err := database.DB.First(&wallpaper, id).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"success": false, "message": "壁纸未找到"})
+	var album model.Album
+	if err := database.DB.First(&album, id).Error; err != nil {
+		// 使用统一返回体
+		response.Fail(c, http.StatusNotFound, "相册未找到")
 		return
 	}
 
 	switch statType {
 	case "view":
-		database.DB.Model(&wallpaper).UpdateColumn("view_count", gorm.Expr("view_count + ?", 1))
+		database.DB.Model(&album).UpdateColumn("view_count", gorm.Expr("view_count + ?", 1))
 	case "download":
-		database.DB.Model(&wallpaper).UpdateColumn("download_count", gorm.Expr("download_count + ?", 1))
+		database.DB.Model(&album).UpdateColumn("download_count", gorm.Expr("download_count + ?", 1))
 	default:
-		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "无效的type参数"})
+		// 使用统一返回体
+		response.Fail(c, http.StatusBadRequest, "无效的type参数")
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"success": true, "message": "更新成功"})
+	// 使用统一返回体
+	response.Success(c, nil, "更新成功")
 }
